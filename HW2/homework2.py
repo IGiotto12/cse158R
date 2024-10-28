@@ -158,15 +158,14 @@ assertFloatList(answers['Q4'], 9)
 ### Question 5
 
 # %%
-bestC = min(berList)
+ber5 = min(berList)
+bestC = C_values[berList.index(ber5)]
 
-model = linear_model.LogisticRegression(C=bestC, class_weight='balanced')
-model.fit(Xtrain, ytrain)
-pred = model.predict(Xvalid)
-ber5 = BER(pred, yvalid)
 
 # %%
 answers['Q5'] = [bestC, ber5]
+
+answers['Q5']
 
 # %%
 assertFloatList(answers['Q5'], 2)
@@ -183,9 +182,7 @@ for l in f:
 # %%
 dataTrain = dataset[:9000]
 dataTest = dataset[9000:]
-
-# %%
-
+dataTrain[0]
 
 # %%
 # Some data structures you might want
@@ -197,18 +194,37 @@ reviewsPerItem = defaultdict(list)
 ratingDict = {} # To retrieve a rating for a specific user/item pair
 
 for d in dataTrain:
-    
+    user = d["user_id"]
+    item = d["book_id"]
+    rating = d["rating"]
+
+    usersPerItem[item].add(user)
+    itemsPerUser[user].add(item)
+    reviewsPerUser[user].append(d)
+    reviewsPerItem[item].append(d)
+
+    ratingDict[(user, item)] = rating
 
 # %%
 def Jaccard(s1, s2):
-    
+    intersection = len(s1 & s2)
+    union = len(s1 | s2)
+    return intersection / union if union else 0
 
 # %%
 def mostSimilar(i, N):
-    
+    simlilarity = []
 
-# %%
+    # set of users who rated item i
+    target_users = usersPerItem[i]
 
+    for item, users in usersPerItem.items():
+        if item != i:
+            sim = Jaccard(target_users, users)
+            simlilarity.append((sim, item))
+
+    most_simiar_items = sorted(simlilarity, reverse=True)[:N]
+    return most_simiar_items
 
 # %%
 answers['Q6'] = mostSimilar('2767052', 10)
@@ -220,10 +236,42 @@ assertFloatList([x[0] for x in answers['Q6']], 10)
 # %%
 ### Question 7
 
-# %%
+# %% [markdown]
+# 
 
+# %%
+average_ratings = {item: sum([review['rating'] for review in reviews]) / len(reviews) for item, reviews in reviewsPerItem.items()}
+
+def predict_rating(user, item):
+    if item not in average_ratings:
+        return sum(average_ratings.values()) / len(average_ratings)
+    numerator, denominator = 0, 0
+
+    # Loop over items the user has rated
+    for j in itemsPerUser[user] - {item}:
+        if j in average_ratings:  # Only consider items with an average rating
+            sim = Jaccard(usersPerItem[item], usersPerItem[j])
+            numerator += (ratingDict[(user, j)] - average_ratings[j]) * sim
+            denominator += sim
+    
+    # the final predicted rating
+    if denominator == 0:
+        return average_ratings[item]  # If no similar items, use item's average rating
+    else:
+        return average_ratings[item] + numerator / denominator
+    
 
 # %%
+def MSE(data):
+    mse = 0
+    for d in data:
+        user, item, actual_rating = d["user_id"], d["book_id"], d["rating"]
+        predicted_rating = predict_rating(user, item)
+        mse += (predicted_rating - actual_rating) ** 2
+    return mse / len(data)
+
+# %%
+mse7 = MSE(dataTest)
 answers['Q7'] = mse7
 
 # %%
@@ -233,9 +281,29 @@ assertFloat(answers['Q7'])
 ### Question 8
 
 # %%
+average_ratings_user = {user: sum([review['rating'] for review in reviews]) / len(reviews) for user, reviews in reviewsPerUser.items()}
 
+def predict_rating(u, i):
+    if u not in average_ratings_user:
+        return sum(average_ratings_user.values()) / len(average_ratings_user)
+    
+    numerator, denominator = 0, 0
+
+    for v in usersPerItem[item] - {user}:
+        if v in average_ratings_user:  # Only consider items with an average rating
+            sim = Jaccard(itemsPerUser[user], itemsPerUser[v])
+            numerator += (ratingDict[(v, item)] - average_ratings_user[v]) * sim
+            denominator += sim
+    
+    # final calculation
+    if denominator == 0:
+        return average_ratings_user[user]  # If no similar items, use item's average rating
+    else:
+        return average_ratings_user[user] + numerator / denominator
+    
 
 # %%
+mse8 = MSE(dataTest)
 answers['Q8'] = mse8
 
 # %%
@@ -245,8 +313,5 @@ assertFloat(answers['Q8'])
 f = open("answers_hw2.txt", 'w')
 f.write(str(answers) + '\n')
 f.close()
-
-# %%
-
 
 
