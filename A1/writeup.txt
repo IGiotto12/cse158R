@@ -1,1 +1,17 @@
-This is my workflow for this assignment about making predictions related to book reviews from Goodreads
+PREDICTIONS on READ
+1. Prepare the training data to build mappings and compute predictions.
+2. Build User-Book Interaction and Book Popularity Maps
+3. Measure the similarity between the target book and books the user has read through Jaccard Similarity
+4. Combine Jaccard Similarity and Popularity for Predictions
+5. Predict on pairs_Read.csv and write the results as either 1 or 0 into the prediction column
+
+
+PREDICTIONS on RATING
+1. Prepare the user-item interaction data for training the model and predicting ratings.
+2. Create mappings of user and book IDs to indices for numerical operations.
+3. Use the global average rating as a baseline for predictions and as a fallback for unseen users or books.
+4. Initialize user and book biases to zero.
+5. Divide the training data into a training set and a validation set.
+6. Train the Model Using Stochastic Gradient Descent to minimize the error and select the best modal parameters.
+7. Use the model parameters (biases and latent factors) that achieved the lowest validation MSE.
+8. Predict on pairs_Rating.csv and save the results into the prediction column
