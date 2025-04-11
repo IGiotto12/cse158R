@@ -1,2 +1,2 @@
-# cse158R
-workplace for the UCSD course CSE 158R
+# Course Projects
+workplace for the UCSD course
